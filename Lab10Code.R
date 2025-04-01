@@ -113,3 +113,36 @@ results_table <- tibble(
 view(results_table)
 
 
+################################################################################
+# 3) Simulation over n and p
+################################################################################
+
+n_values <- seq(100, 3000, by=10)
+p_values <- seq(0.01, 0.99, by=0.01)
+simulations <- 10000
+
+# initialize an empty tibble
+margin_error_results <- tibble(n = numeric(), 
+                               p = numeric(), 
+                               margin_error = numeric())
+
+for (n in n_values) {
+  for (p in p_values) {
+    sample_counts <- rbinom(simulations, size=n, prob=p)
+    sample_proportions <- sample_counts/n
+    middle_95_range <- quantile(sample_proportions, probs = c(0.025, 0.975))
+    margin_error <- (middle_95_range[2] - middle_95_range[1]) / 2
+    
+    margin_error_results<- bind_rows(margin_error_results, 
+                                     tibble(n=n, p=p, margin_error=margin_error))
+  }
+}
+view(margin_error_results)
+
+ggplot(data=margin_error_results, aes(x=n, y=p, fill=margin_error)) +
+  geom_raster() +
+  scale_fill_viridis_c(name="Margin of Error")
+  theme_bw() +
+  ggtitle("Margin of Error Across Different Sample Sizes and Probabilities") +
+  xlab("Sample Size (n)") +
+  ylab("Probability (p)")

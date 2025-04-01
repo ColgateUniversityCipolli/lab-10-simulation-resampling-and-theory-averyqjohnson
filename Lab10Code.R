@@ -1,0 +1,71 @@
+###########################################################################
+# HW 10
+# Avery Johnson
+# MATH 240 - SPRING 2025
+###########################################################################
+
+library(tidyverse)
+################################################################################
+# 1) Basic Simulation
+################################################################################
+
+# for sample size of 1004
+samp.size <- 1004 # sample size
+p_true <- 0.39
+simulations <- 10000
+
+sample_counts <- rbinom(simulations, size=samp.size, prob=p_true)
+sample_proportions <- sample_counts/samp.size
+
+og.sample <- tibble(proportion=sample_proportions)
+
+sample.1004.plot <- ggplot(data=og.sample)+
+  geom_histogram(aes(x=proportion, y=after_stat(density)), color="lightgrey") +
+  geom_density(aes(x = proportion), color = "red")+
+  geom_hline(yintercept=0)+
+  theme_bw()+
+  xlab("Sample Proportion")+
+  ylab("Density") +
+  ggtitle("Sampling Distribution (n=1004)")
+
+middle.95.range.1004 <- quantile(sample_proportions, probs = c(0.025, 0.975))
+middle.range.1004 <- middle.95.range.1004[2] - middle.95.range.1004[1]
+margin.error.1004 <- middle.range.1004 / 2
+  
+# for sample size of 2008
+samp.size.2 <- 2008 # sample size
+p_true <- 0.39
+simulations <- 10000
+
+sample_counts.2 <- rbinom(simulations, size=samp.size.2, prob=p_true)
+sample_proportions.2 <- sample_counts.2/samp.size.2
+
+og.sample.2 <- tibble(proportion=sample_proportions.2)
+
+sample.2008.plot <- ggplot(data=og.sample.2)+
+  geom_histogram(aes(x=proportion, y=after_stat(density)), color="lightgrey") +
+  geom_density(aes(x = proportion), color = "red")+
+  geom_hline(yintercept=0)+
+  theme_bw()+
+  xlab("Sample Proportion")+
+  ylab("Density") +
+  ggtitle("Sampling Distribution (n=2008)")
+
+middle.95.range.2008 <- quantile(sample_proportions.2, probs = c(0.025, 0.975))
+middle.range.2008 <- middle.95.range.2008[2] - middle.95.range.2008[1]
+margin.error.2008 <- middle.range.2008 / 2
+
+library(patchwork)
+sample.plots <- sample.1004.plot + sample.2008.plot
+
+results_table <- tibble(
+  `Sample Size` = c(1004, 2008),
+  `Lower Bound (95%)` = c(middle.95.range.1004[1], middle.95.range.2008[1]),
+  `Upper Bound (95%)` = c(middle.95.range.1004[2], middle.95.range.2008[2]),
+  `Margin of Error` = c(margin.error.1004, margin.error.2008)
+)
+view(results_table)
+
+################################################################################
+# 2) Resampling
+################################################################################

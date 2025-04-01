@@ -69,3 +69,47 @@ view(results_table)
 ################################################################################
 # 2) Resampling
 ################################################################################
+
+satisfied.prop <- 0.39
+dissatisfied.prop <- 0.59
+no.opinion.prop <- 0.02
+samp.size <- 1004
+
+# data frame from Gallup survey
+gallup.sample <- tibble(id          = 1:samp.size,
+                        response = c(rep("Satisfied", round(satisfied.prop * samp.size)), 
+                                 rep("Not Satisfied", round(dissatisfied.prop * samp.size)),
+                                 rep("No Opinion", round(no.opinion.prop * samp.size)))
+)
+
+# resamples
+R <- 1000
+resamples <- tibble(p.hat = numeric(R))
+
+for (i in 1:R) {
+  curr.resample <- sample(gallup.sample$response, size=samp.size, replace=T)
+  resamples$p.hat[i] <- mean(curr.resample == "Satisfied")
+}
+
+resampling.plot <- ggplot(data=resamples) +
+  geom_histogram(aes(x = p.hat, y = after_stat(density)), color = "lightgrey", bins = 30) +
+  geom_density(aes(x = p.hat), color="red") +
+  geom_hline(yintercept=0) +
+  theme_bw() +
+  xlab(bquote(hat(p)))+
+  ylab("Density") +
+  ggtitle(bquote("Resampling Distribution of " ~ hat(p)))
+
+middle_95_range_resample <- quantile(resamples$p.hat, probs = c(0.025, 0.975))
+margin_error_resample <- (middle_95_range_resample[2] - middle_95_range_resample[1]) / 2
+
+
+results_table <- tibble(
+  `Sample Size` = c("Simulation (n=1004)", "Simulation (n=2008)", "Resample"),
+  `Lower Bound (95%)` = c(middle.95.range.1004[1], middle.95.range.2008[1], middle_95_range_resample[1]),
+  `Upper Bound (95%)` = c(middle.95.range.1004[2], middle.95.range.2008[2], middle_95_range_resample[2]),
+  `Margin of Error` = c(margin.error.1004, margin.error.2008, margin_error_resample)
+)
+view(results_table)
+
+

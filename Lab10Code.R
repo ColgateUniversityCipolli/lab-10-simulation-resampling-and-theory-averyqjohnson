@@ -139,10 +139,44 @@ for (n in n_values) {
 }
 view(margin_error_results)
 
-ggplot(data=margin_error_results, aes(x=n, y=p, fill=margin_error)) +
+me.plot <- ggplot(data=margin_error_results, aes(x=n, y=p, fill=margin_error)) +
   geom_raster() +
-  scale_fill_viridis_c(name="Margin of Error")
+  scale_fill_viridis_c(name="Margin of Error") + 
   theme_bw() +
   ggtitle("Margin of Error Across Different Sample Sizes and Probabilities") +
   xlab("Sample Size (n)") +
   ylab("Probability (p)")
+  
+################################################################################
+# 4) Actual Margin of Error Calculation
+################################################################################
+
+n_values <- seq(100, 3000, by=10)
+p_values <- seq(0.01, 0.99, by=0.01)
+z <- qnorm(0.975)  # 95% confidence interval
+
+wilson_margin_error_results <- tibble(n = numeric(), 
+                               p = numeric(), 
+                               margin_error = numeric())
+
+for (n in n_values) {
+  for (p in p_values) {
+    numerator <- sqrt((n * p * (1-p)) + (z^2 / 4))
+    denominator <- n + z^2
+    margin_error <- z * (numerator/denominator)
+    
+    wilson_margin_error_results <- bind_rows(wilson_margin_error_results,
+                                             tibble(n=n, p=p, margin_error=margin_error))
+  }
+}
+
+wilson.me.plot <- ggplot(data=wilson_margin_error_results, aes(x=n, y=p, fill=margin_error)) +
+  geom_raster() +
+  scale_fill_viridis_c(name="Margin of Error") +
+  theme_bw() +
+  ggtitle("Wilson Margin of Error Across Different Sample Sizes and Probabilities") +
+  xlab("Sample Size (n)") +
+  ylab("Probability (p)")
+
+library(patchwork)
+me.plot + wilson.me.plot

@@ -24,13 +24,13 @@
 \begin{document}
 
 \vspace{-1in}
-\title{Lab XX -- MATH 240 -- Computational Statistics}
+\title{Lab 10 -- MATH 240 -- Computational Statistics}
 
 \author{
-  First Author \\
-  Affiliation  \\
-  Department  \\
-  {\tt email@domain}
+  Avery Johnson \\
+  Colgate University  \\
+  Department of Mathematics  \\
+  {\tt aqjohnson@colgate.edu}
 }
 
 \date{}
@@ -41,101 +41,255 @@
 %\raggedcolumns % If your spacing gets messed up try uncommenting 
                 % this line
 \begin{abstract}
-This document provides a basic template for the 2-page labs we will complete each week. Here, briefly summarize what you did and why it might be helpful. Provide all the top-line conclusions, but avoid providing \emph{all} the details. Results should be limited to ``we show X, Y, and Z."
+This lab investigates Gallup's \citep{gallup} claim that increasing the sample size reduces
+the margin of error, specifically comparing the results of 1,000-sample poll ($\pm 4\%$)
+with a 2,000-sample poll ($\pm 2\%$). Using simulations and resampling from the
+Gallup data, we confirm that larger sample sizes reduce the margin of error, but
+the population proportion also plays a significant role. Resampling results were
+consistent with simulations, reinforcing the reliability of this method when
+the true population is unknown. Additionally, theoretical estimates from the Wilson
+formula aligned with the simualted results. Overall, this study shows that Gallup's
+claims oversimplify the relationship between the margin of error, sample size, and 
+population proportion.
+
 \end{abstract}
 
-\noindent \textbf{Keywords:} What topics does the lab cover concerning class? List 3-4 key terms here, separated by semicolons.
+\noindent \textbf{Keywords:} Simulation, Resampling, Margin of Error
 
 \section{Introduction}
-Provide an overarching summary of what you're talking about. In this section, you introduce the idea to the reader, and your goal is to pull them in. What's the mystery you aim to solve?
+Understanding how confident we can be in a sample-based proportion is fundamental
+to survey statistics. Gallup \citep{gallup}, for example, claims their margin of error is within $\pm 2\%$ for a sample size of 2,000 and $\pm 4\%$ for a sample size of 1,000.
+However, these claims are often presented without a detailed explanation.
+This lab aims to break down these claims using simulation, resampling, and theoretical formulas. We begin by simulating from a known population to observe how sample
+proportions vary. Next, we use resampling methods to estimate variability from real survey data. Finally, we expand the analysis by systematically varying sample sizes and
+population proportions, comparing the resulting variability to a theoretical
+margin of error formula. Together, these approaches offer a deeper understanding
+of how sample size and population proportion influence uncertainty, and provide 
+insight into the accuracy of the claims made by Gallup.
 
-You want to provide enough background to understand the context of the work. Specifically, what is the question you are addressing? If it applies, describe what information currently exists about this problem, including citations, and explain how the question you're answering complements this work.
-
-Provide a roadmap of the structure of the paper. 
-
-\subsection{Intro Subsection}
-You might need/want to discuss the topics in subsections. Or, you may have multiple questions.
-
-\begin{Figure}
-\includegraphics{penguins.pdf}
-\captionof{figure}{This is a figure!} \label{fig:penguins}
-\end{Figure}
-
-\begin{Figure}
-% latex table generated in R 4.3.3 by xtable 1.8-4 package
-% Tue Apr  1 07:26:31 2025
-%\begin{table}[H]% YOU NEED TO REPLACE THIS WITH FIGURE
-\centering
-\begin{tabular}{lrrrr}
-  \hline
-species & Mean & Median & SD & IQR \\ 
-  \hline
-Adelie & 3700.66 & 3700.00 & 458.57 & 650.00 \\ 
-  Chinstrap & 3733.09 & 3700.00 & 384.34 & 462.50 \\ 
-  Gentoo & 5076.02 & 5000.00 & 504.12 & 800.00 \\ 
-   \hline
-\end{tabular}
-%\caption{This is a table.} % YOU NEED TO CHANGE THIS TO captionof
-\captionof{table}{This is a table.} 
-\label{tab:penguins}
-%\end{table} % YOU NEED TO REPLACE THIS WITH FIGURE
-\end{Figure}
-<<eval=F, echo=F>>=
-library(tidyverse)
-library(palmerpenguins)
-pdf("penguins.pdf", width=3, height=2)
-ggplot(data=penguins)+
-  geom_boxplot(aes(x=species, y=body_mass_g))+
-  theme_bw()+
-  xlab("Species")+
-  ylab("Body Mass (g)")
-dev.off()
-
-library(xtable)
-penguins |>
-  group_by(species) |>
-  summarize(
-    Mean   = mean(body_mass_g, na.rm=T),
-    Median = median(body_mass_g, na.rm=T),
-    SD     = sd(body_mass_g, na.rm=T),
-    IQR    = IQR(body_mass_g, na.rm=T),
-  )|>
-  xtable(caption = "This is a table.",
-         label = "tab:penguins",
-         digits = 2 ) |>
-  print(table.placement="H",
-        include.rownames=F)
-@
 \section{Methods}
-Describe the data you are working with, if applicable. Describe the specific process you will follow to answer the question at hand. This does not mean you should write something like this.
-\begin{quote}
-\textit{I did this and then I did that and then I did this other thing and then..., and then..., and then...}
-\end{quote}
-Instead, it should provide a clear and concise narrative that flows from the problem specification in the Introduction to how you will approach answering it. This is where I would expect to see some citations for \texttt{R} packages you will use to conduct the statistical analysis reported in the Results section.
+\subsection{Basic Simulation}
+We simulated 10,000 samples using the binomial distribution with a known success
+probability of $p=0.39$. We examined sample sizes of 1004 and 2008- values used 
+in recent Gallup polls. For each sample, we calculated the proportion of successes
+and estimated the middle $95\%$ interval of these proportions, which we used to
+compute a margin of error.
 
+\subsection{Resampling from Real Data}
+In most real-world situations, the true population proportion \textit{p} is typically unknown. When this is the case, we can not simulate directly from a known distribution,
+so we use resampling. Resampling involves repeatedly drawing samples
+from the observed data with replacement, allowing us to mimic the process of 
+sampling from the population without assuming the underlying distribution. We 
+constructed a data frame representing Gallup's survey of 1,004 Americans, 
+based on the reported breakdowns: $39\%$ were satisfied, $59\%$ were dissatisfied, 
+and $2\%$ had no opinion. We then performed 1,000 resamples, each with a sample
+size of 1,004, drawn with replacement from the original data. For each resample,
+we calculated the sample proportion $\hat{p}$ of respondents who were satisfied. 
+The resample proportions were plotted on a histogram with a superimposed density
+curve to visually approximate the sampling distribution for the sample proportion.
+Additionally, we calculated the range of the middle $95\%$ along with the margin
+of error to compare with the simulation data.
 
-\subsection{Methods Subsection}
-Much like the Introduction, subsections can be helpful for the Methods section. For example, you might describe data collection and the statistical analyses of the collected data in different subsections. Or, you may have different questions that require distinct methods. 
+\subsection{Simulation Over \textit{n} and \textit{p}}
+Next, we explored how the margin of error behaves across a range of sample
+sizes (from 100 to 3000) and population proportions (from 0.01 to 0.99). We
+created a double \texttt{for()} loop to iterate over each \textit{n,p} pair. For
+each of these pairs, we simulated 10,000 sample proportions using 
+\texttt{rbinom()} and calculated the $95\%$ interval and margin of error. The
+margin of error results were stored and then plotted in a \texttt{geom\_raster()}
+plot. 
+
+\subsection{Actual Margin of Error}
+Using the Wilson margin of error formula, we computed the theoretical margin of errors for
+the same grid of \textit{n,p} values. Once again, we used a double \texttt{for()} loop
+to iterate over the pairs of \textit{n,p} values, stored the Wilson margin of error
+at each iteration, and plotted the results in a \texttt{geom\_raster()} plot. 
+
+\pagebreak
 
 \section{Results}
-Tie together the Introduction -- where you introduce the problem at hand -- and the methods --  what you propose to do to answer the question. Present your data, the results of your analyses, and how each reported aspect contributes to answering the question. This section should include table(s), statistic(s), and graphical displays. Make sure to put the results in a sensible order and that each result contributes a logical and developed solution. It should not just be a list. Avoid being repetitive. 
+\subsection{Basic Simulation}
+Figure \ref{simulationplot} presents the histograms of the sample proportions
+for the two sample sizes, $n=1004$ and $n=2008$. Each plot includes a superimposed
+density curve, providing a visual approximation of the sampling distribution of 
+the sample proportion. For both sample sizes, the histogram exhibits a roughly
+bell-shaped distribution, which is characteristic of normality if the sample
+size is large enough. As can be found in Table \ref{resultstable}, 
+for the sample size of $n=1004$, the middle $95\%$ of the sample proportions lies within a range approximately from 0.36 to 0.42, yielding a margin of error of about 0.03. When the sample size is doubled to $n=2008$, the range of the middle $95\%$ decreases to approximately 0.40 to 0.41, resulting in a margin of error of about 0.02. This 
+reduction in the margin of error as the sample size increases is consistent with the behavior expected by Gallup, though the margin of error of 0.030 for $n=1004$ issmaller than the stated $\pm 4\%$.
 
-\subsection{Results Subsection}
-Subsections can be helpful for the Results section, too. This can be particularly helpful if you have different questions to answer. 
+\subsection{Resampling}
+Figure \ref{resamplingplot} shows the histogram of the sample proportions obtained
+from the 1,000 resamples of Gallup's survey data, with a superimposed density
+curve to approximate the sampling distribution for the sampling proportion $\hat{p}$.
+The distribution appears roughly bell-shaped, similar to the results from the simulations,
+indicating that the sampling distribution of the sample proportion is roughly normal. 
+The middle $95\%$ of the sample proportions lies within a range approximately from 0.36 to 0.42, giving a margin of error of about 0.03. This margin of error is very similar to the result from the simulation with $n=1004$. Table \ref{resultstable} summarizes the comparison between the simulation results for $n=1004$, $n=2008$, and the resampling results. While we cannot increase the sample size with resampling, the margin of error closely mirrors that observed in the simulation for $n=1004$, which is smaller than the $\pm 4\%$ margin of error reported by Gallup.
+
+<<echo=FALSE, eval=TRUE, results="asis", message=FALSE, warning=FALSE, size='scriptsize'>>=
+###########################################################################
+# HW 10
+# Avery Johnson
+# MATH 240 - SPRING 2025
+###########################################################################
+
+library(tidyverse)
+################################################################################
+# 1) Basic Simulation
+################################################################################
+
+# for sample size of 1004
+samp.size <- 1004 # sample size
+p_true <- 0.39
+simulations <- 10000
+
+sample_counts <- rbinom(simulations, size=samp.size, prob=p_true)
+sample_proportions <- sample_counts/samp.size
+
+og.sample <- tibble(proportion=sample_proportions)
+
+sample.1004.plot <- ggplot(data=og.sample)+
+  geom_histogram(aes(x=proportion, y=after_stat(density)), color="lightgrey") +
+  geom_density(aes(x = proportion), color = "red")+
+  geom_hline(yintercept=0)+
+  theme_bw()+
+  xlab("Sample Proportion")+
+  ylab("Density") +
+  ggtitle("Sampling Distribution (n=1004)")
+
+middle.95.range.1004 <- quantile(sample_proportions, probs = c(0.025, 0.975))
+middle.range.1004 <- middle.95.range.1004[2] - middle.95.range.1004[1]
+margin.error.1004 <- middle.range.1004 / 2
+  
+# for sample size of 2008
+samp.size.2 <- 2008 # sample size
+p_true <- 0.39
+simulations <- 10000
+
+sample_counts.2 <- rbinom(simulations, size=samp.size.2, prob=p_true)
+sample_proportions.2 <- sample_counts.2/samp.size.2
+
+og.sample.2 <- tibble(proportion=sample_proportions.2)
+
+sample.2008.plot <- ggplot(data=og.sample.2)+
+  geom_histogram(aes(x=proportion, y=after_stat(density)), color="lightgrey") +
+  geom_density(aes(x = proportion), color = "red")+
+  geom_hline(yintercept=0)+
+  theme_bw()+
+  xlab("Sample Proportion")+
+  ylab("Density") +
+  ggtitle("Sampling Distribution (n=2008)")
+
+middle.95.range.2008 <- quantile(sample_proportions.2, probs = c(0.025, 0.975))
+middle.range.2008 <- middle.95.range.2008[2] - middle.95.range.2008[1]
+margin.error.2008 <- middle.range.2008 / 2
+
+library(patchwork)
+sample.plots <- sample.1004.plot + sample.2008.plot
+
+results_table <- tibble(
+  `Sample Size` = c(1004, 2008),
+  `Lower Bound (95%)` = c(middle.95.range.1004[1], middle.95.range.2008[1]),
+  `Upper Bound (95%)` = c(middle.95.range.1004[2], middle.95.range.2008[2]),
+  `Margin of Error` = c(margin.error.1004, margin.error.2008)
+)
+
+################################################################################
+# 2) Resampling
+################################################################################
+
+satisfied.prop <- 0.39
+dissatisfied.prop <- 0.59
+no.opinion.prop <- 0.02
+samp.size <- 1004
+
+# data frame from Gallup survey
+gallup.sample <- tibble(id          = 1:samp.size,
+                        response = c(rep("Satisfied", round(satisfied.prop * samp.size)), 
+                                 rep("Not Satisfied", round(dissatisfied.prop * samp.size)),
+                                 rep("No Opinion", round(no.opinion.prop * samp.size)))
+)
+
+# resamples
+R <- 1000
+resamples <- tibble(p.hat = numeric(R))
+
+for (i in 1:R) {
+  curr.resample <- sample(gallup.sample$response, size=samp.size, replace=T)
+  resamples$p.hat[i] <- mean(curr.resample == "Satisfied")
+}
+
+resampling.plot <- ggplot(data=resamples) +
+  geom_histogram(aes(x = p.hat, y = after_stat(density)), color = "lightgrey", bins = 30) +
+  geom_density(aes(x = p.hat), color="red") +
+  geom_hline(yintercept=0) +
+  theme_bw() +
+  xlab(bquote(hat(p)))+
+  ylab("Density") +
+  ggtitle(bquote("Resampling Distribution of " ~ hat(p)))
+
+middle_95_range_resample <- quantile(resamples$p.hat, probs = c(0.025, 0.975))
+margin_error_resample <- (middle_95_range_resample[2] - middle_95_range_resample[1]) / 2
+
+
+results_table <- tibble(
+  `Sample Size` = c("Simulation (n=1004)", "Simulation (n=2008)", "Resample"),
+  `Lower (95%)` = c(middle.95.range.1004[1], middle.95.range.2008[1], middle_95_range_resample[1]),
+  `Upper (95%)` = c(middle.95.range.1004[2], middle.95.range.2008[2], middle_95_range_resample[2]),
+  `MOE` = c(margin.error.1004, margin.error.2008, margin_error_resample)
+)
+
+# create Latex table
+library(xtable)
+results_xtable <- xtable(results_table, 
+                      caption="Margin of Error Results",
+                      label="resultstable")
+@
+
+<<echo=FALSE, eval=TRUE, results="asis">>=
+# placement="H" places table [H]ere, just like plot
+# include.rownames=FALSE doesn’t print the row numbers in this example
+print(results_xtable,
+table.placement = "H", include.rownames=FALSE, size = "small")
+@
+
+\columnbreak
+\subsection{Simulation Over \textit{n} and \textit{p}}
+The simulation results, shown in Figure \ref{moeovernandp}, reveal the relationship 
+between sample size $n$ and probability proportion $p$ in determining the margin
+of error. This demonstrates that the margin of error story is not as simple as 
+Gallup described. While it is true that increasing $n$ reduces the margin of error,
+the value of $p$ also plays a significant role. Specifically, when $p$ is close to 
+0 or 1, the margin of error becomes smaller due to the constrained parameter space.
+This highlights that the margin of error does not solely depend on sample size but
+also on the extremity of the population proportion. 
+
+\subsection{Actual Margin of Error}
+As can be seen in Figure \ref{wilson}, the heat map of the Wilson-based margins
+of error looks nearly identical to the one from the simulation. This indicates that the Wilson formula is a reliable and efficient way to approximate sampling variability. Both plots that the variability peaks at $p=0.5$, that increasing $n$ leads to tighter 
+estimates, and that when $p$ is extreme, the margin of error is smaller.
 
 
 \section{Discussion}
- You should objectively evaluate the evidence you found in the data. Do not embellish or wish-terpet (my made-up phase for making an interpretation you, or the researcher, wants to be true without the data \emph{actually} supporting it). Connect your findings to the existing information you provided in the Introduction.
-
-Finally, provide some concluding remarks that tie together the entire paper. Think of the last part of the results as abstract-like. Tell the reader what they just consumed -- what's the takeaway message?
+This lab reinforced key ideas about statistical uncertainty in estimating 
+proportions. Simulations in a known $p$ showed how sampling variability plays
+out as sample size increases. Resampling showed that even when we don't know
+the truth, we can still estimate variability using just the observed data, and
+the results tend to look the same. Extending the simulations over a grid of
+values for $n$ and $p$ showed that increasing the sample size alone does not
+guarantee a small margin of error; the value of $p$ matters too. When $p$
+is near the extreme, the margin of error shrinks because the proportions can't
+go below 0 or above 1. Finally, comparing simulated margins to those derived
+from the Wilson formula showed similarity. Overall, these analyses complicate 
+the excerpts in the Gallup document, informing us that the relationship between
+sample size and margin of error is more nuanced than it may initially appear. While
+larger sample sizes certainly help reduce variability, the true precision of an estimate
+also depends on the underlying population propotion. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Bibliography
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \vspace{2em}
-
-\noindent\textbf{Bibliography:} Note that when you add citations to your bib.bib file \emph{and}
-you cite them in your document, the bibliography section will automatically populate here.
 
 \begin{tiny}
 \bibliography{bib}
@@ -149,6 +303,241 @@ you cite them in your document, the bibliography section will automatically popu
 \onecolumn
 \section{Appendix}
 
-If you have anything extra, you can add it here in the appendix. This can include images or tables that don't work well in the two-page setup, code snippets you might want to share, etc.
+\subsection{Basic Simulation}
+<<plot1, echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE, size='scriptsize'>>=
+library(tidyverse)
+################################################################################
+# 1) Basic Simulation
+################################################################################
+
+# for sample size of 1004
+samp.size <- 1004 # sample size
+p_true <- 0.39
+simulations <- 10000
+
+sample_counts <- rbinom(simulations, size=samp.size, prob=p_true)
+sample_proportions <- sample_counts/samp.size
+
+og.sample <- tibble(proportion=sample_proportions)
+
+sample.1004.plot <- ggplot(data=og.sample)+
+  geom_histogram(aes(x=proportion, y=after_stat(density)), color="lightgrey") +
+  geom_density(aes(x = proportion), color = "red")+
+  geom_hline(yintercept=0)+
+  theme_bw()+
+  xlab("Sample Proportion")+
+  ylab("Density") +
+  ggtitle("Sampling Distribution (n=1004)")
+
+middle.95.range.1004 <- quantile(sample_proportions, probs = c(0.025, 0.975))
+middle.range.1004 <- middle.95.range.1004[2] - middle.95.range.1004[1]
+margin.error.1004 <- middle.range.1004 / 2
+  
+# for sample size of 2008
+samp.size.2 <- 2008 # sample size
+p_true <- 0.39
+simulations <- 10000
+
+sample_counts.2 <- rbinom(simulations, size=samp.size.2, prob=p_true)
+sample_proportions.2 <- sample_counts.2/samp.size.2
+
+og.sample.2 <- tibble(proportion=sample_proportions.2)
+
+sample.2008.plot <- ggplot(data=og.sample.2)+
+  geom_histogram(aes(x=proportion, y=after_stat(density)), color="lightgrey") +
+  geom_density(aes(x = proportion), color = "red")+
+  geom_hline(yintercept=0)+
+  theme_bw()+
+  xlab("Sample Proportion")+
+  ylab("Density") +
+  ggtitle("Sampling Distribution (n=2008)")
+
+middle.95.range.2008 <- quantile(sample_proportions.2, probs = c(0.025, 0.975))
+middle.range.2008 <- middle.95.range.2008[2] - middle.95.range.2008[1]
+margin.error.2008 <- middle.range.2008 / 2
+
+library(patchwork)
+sample.plots <- sample.1004.plot + sample.2008.plot
+
+sample.plots
+@
+\begin{figure}[H]
+\begin{center}
+<<echo=FALSE, warning=FALSE, message=FALSE, fig.dim=c(2.5,1.75)>>=
+@
+\caption{Simulations for $n=1004$ and $n=2008$}
+\label{simulationplot} %we can now reference plot1
+\end{center}
+\end{figure}
+
+\pagebreak
+\subsection{Resampling}
+<<plot2, echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE, size='scriptsize'>>=
+################################################################################
+# 2) Resampling
+################################################################################
+
+satisfied.prop <- 0.39
+dissatisfied.prop <- 0.59
+no.opinion.prop <- 0.02
+samp.size <- 1004
+
+# data frame from Gallup survey
+gallup.sample <- tibble(id          = 1:samp.size,
+                        response = c(rep("Satisfied", round(satisfied.prop * samp.size)), 
+                                 rep("Not Satisfied", round(dissatisfied.prop * samp.size)),
+                                 rep("No Opinion", round(no.opinion.prop * samp.size)))
+)
+
+# resamples
+R <- 1000
+resamples <- tibble(p.hat = numeric(R))
+
+for (i in 1:R) {
+  curr.resample <- sample(gallup.sample$response, size=samp.size, replace=T)
+  resamples$p.hat[i] <- mean(curr.resample == "Satisfied")
+}
+
+resampling.plot <- ggplot(data=resamples) +
+  geom_histogram(aes(x = p.hat, y = after_stat(density)), color = "lightgrey", bins = 30) +
+  geom_density(aes(x = p.hat), color="red") +
+  geom_hline(yintercept=0) +
+  theme_bw() +
+  xlab(bquote(hat(p)))+
+  ylab("Density") +
+  ggtitle(bquote("Resampling Distribution of " ~ hat(p)))
+
+resampling.plot
+@
+\begin{figure}[H]
+\begin{center}
+<<echo=FALSE, warning=FALSE, message=FALSE, fig.dim=c(2.5,1.75)>>=
+@
+\caption{Resampling Distribution of $\hat{p}$}
+\label{resamplingplot} %we can now reference plot1
+\end{center}
+\end{figure}
+
+\pagebreak
+\subsection{Simulated Margin of Error}
+<<plot3, echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE, size='scriptsize'>>=
+n_values <- seq(100, 3000, by=10)
+p_values <- seq(0.01, 0.99, by=0.01)
+simulations <- 10000
+
+# initialize an empty tibble
+margin_error_results <- tibble(n = numeric(), 
+                               p = numeric(), 
+                               margin_error = numeric())
+
+for (n in n_values) {
+  for (p in p_values) {
+    sample_counts <- rbinom(simulations, size=n, prob=p)
+    sample_proportions <- sample_counts/n
+    middle_95_range <- quantile(sample_proportions, probs = c(0.025, 0.975))
+    margin_error <- (middle_95_range[2] - middle_95_range[1]) / 2
+    
+    margin_error_results<- bind_rows(margin_error_results, 
+                                     tibble(n=n, p=p, margin_error=margin_error))
+  }
+}
+
+me.plot <- ggplot(data=margin_error_results, aes(x=n, y=p, fill=margin_error)) +
+  geom_raster() +
+  scale_fill_viridis_c(name="Margin of Error") + 
+  theme_bw() +
+  ggtitle("Margin of Error Across Varying n and p") +
+  xlab("Sample Size (n)") +
+  ylab("Probability (p)")
+
+me.plot
+
+@
+
+\begin{figure}[H]
+\begin{center}
+<<echo=FALSE, warning=FALSE, message=FALSE, fig.dim=c(2.5,1.75)>>=
+@
+\caption{Margin of Error Across $n$ and $p$}
+\label{moeovernandp} %we can now reference plot1
+\end{center}
+\end{figure}
+
+\pagebreak
+\subsection{Wilson Margin of Error}
+<<plot4, echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE, size='scriptsize'>>=
+
+n_values <- seq(100, 3000, by=10)
+p_values <- seq(0.01, 0.99, by=0.01)
+simulations <- 10000
+
+# initialize an empty tibble
+margin_error_results <- tibble(n = numeric(), 
+                               p = numeric(), 
+                               margin_error = numeric())
+
+for (n in n_values) {
+  for (p in p_values) {
+    sample_counts <- rbinom(simulations, size=n, prob=p)
+    sample_proportions <- sample_counts/n
+    middle_95_range <- quantile(sample_proportions, probs = c(0.025, 0.975))
+    margin_error <- (middle_95_range[2] - middle_95_range[1]) / 2
+    
+    margin_error_results<- bind_rows(margin_error_results, 
+                                     tibble(n=n, p=p, margin_error=margin_error))
+  }
+}
+
+me.plot <- ggplot(data=margin_error_results, aes(x=n, y=p, fill=margin_error)) +
+  geom_raster() +
+  scale_fill_viridis_c(name="Margin of Error") + 
+  theme_bw() +
+  ggtitle("Margin of Error Across Different Sample Sizes and Probabilities") +
+  xlab("Sample Size (n)") +
+  ylab("Probability (p)")
+  
+################################################################################
+# 4) Actual Margin of Error Calculation
+################################################################################
+
+n_values <- seq(100, 3000, by=10)
+p_values <- seq(0.01, 0.99, by=0.01)
+z <- qnorm(0.975)  # 95% confidence interval
+
+wilson_margin_error_results <- tibble(n = numeric(), 
+                               p = numeric(), 
+                               margin_error = numeric())
+
+for (n in n_values) {
+  for (p in p_values) {
+    numerator <- sqrt((n * p * (1-p)) + (z^2 / 4))
+    denominator <- n + z^2
+    margin_error <- z * (numerator/denominator)
+    
+    wilson_margin_error_results <- bind_rows(wilson_margin_error_results,
+                                             tibble(n=n, p=p, margin_error=margin_error))
+  }
+}
+
+wilson.me.plot <- ggplot(data=wilson_margin_error_results, aes(x=n, y=p, fill=margin_error)) +
+  geom_raster() +
+  scale_fill_viridis_c(name="Margin of Error") +
+  theme_bw() +
+  ggtitle("Wilson Margin of Error Across Different Sample Sizes and Probabilities") +
+  xlab("Sample Size (n)") +
+  ylab("Probability (p)")
+
+wilson.me.plot
+@
+
+\begin{figure}[H]
+\begin{center}
+<<echo=FALSE, warning=FALSE, message=FALSE, fig.dim=c(2.5,1.75)>>=
+@
+\caption{Wilson Margin of Error}
+\label{wilson} %we can now reference plot1
+\end{center}
+\end{figure}
+
 
 \end{document}

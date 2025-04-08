@@ -64,7 +64,6 @@ results_table <- tibble(
   `Upper Bound (95%)` = c(middle.95.range.1004[2], middle.95.range.2008[2]),
   `Margin of Error` = c(margin.error.1004, margin.error.2008)
 )
-view(results_table)
 
 ################################################################################
 # 2) Resampling
